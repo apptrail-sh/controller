@@ -3,6 +3,8 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,7 +12,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
-	"time"
 )
 
 const (
