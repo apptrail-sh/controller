@@ -84,6 +84,15 @@ func (dr *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		timeFormatted := newAppVer.LastUpdated.Format(time.RFC3339)
 
+		labelsToDelete := make(map[string]string)
+		labelsToDelete["namespace"] = resource.Namespace
+		labelsToDelete["app"] = resource.Name
+
+		deleted := appVersionGauge.DeletePartialMatch(labelsToDelete)
+		if deleted > 0 {
+			log.Info("Deleted old deployment version metric", "Deployment", resource)
+		}
+
 		appVersionGauge.WithLabelValues(
 			resource.Namespace,
 			resource.Name,
