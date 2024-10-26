@@ -3,8 +3,9 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"github.com/apptrail-sh/controller/internal/model"
 	"time"
+
+	"github.com/apptrail-sh/controller/internal/model"
 
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/api/apps/v1"

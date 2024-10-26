@@ -19,10 +19,11 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"os"
+
 	"github.com/apptrail-sh/controller/internal/hooks"
 	"github.com/apptrail-sh/controller/internal/hooks/slack"
 	"github.com/apptrail-sh/controller/internal/model"
-	"os"
 
 	"github.com/apptrail-sh/controller/internal/reconciler"
 

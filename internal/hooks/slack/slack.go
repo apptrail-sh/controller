@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/apptrail-sh/controller/internal/model"
 	"io"
 	"net/http"
+
+	"github.com/apptrail-sh/controller/internal/model"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -70,6 +71,10 @@ func (slack *SlackNotifier) Notify(ctx context.Context, workload model.WorkloadU
 		log.Error(errResp, msg)
 		return errResp
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		log.Error(err, "failed to close response body.")
+		return err
+	}
 	return nil
 }
