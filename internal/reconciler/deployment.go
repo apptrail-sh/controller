@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"github.com/apptrail-sh/controller/internal/model"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,15 +43,17 @@ type DeploymentReconciler struct {
 	Scheme             *runtime.Scheme
 	Recorder           record.EventRecorder
 	deploymentVersions map[string]AppVersion
+	notifierChan       chan<- model.WorkloadUpdate
 }
 
-func NewDeploymentReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder) *DeploymentReconciler {
+func NewDeploymentReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, notifierChan chan<- model.WorkloadUpdate) *DeploymentReconciler {
 	metrics.Registry.MustRegister(appVersionGauge)
 	return &DeploymentReconciler{
 		Client:             client,
 		Scheme:             scheme,
 		Recorder:           recorder,
 		deploymentVersions: make(map[string]AppVersion),
+		notifierChan:       notifierChan,
 	}
 }
 
@@ -99,6 +102,15 @@ func (dr *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			newAppVer.PreviousVersion,
 			newAppVer.CurrentVersion,
 			timeFormatted).Set(1)
+
+		dr.notifierChan <- model.WorkloadUpdate{
+			Name:            resource.Name,
+			Namespace:       resource.Namespace,
+			Kind:            resource.Kind,
+			PreviousVersion: newAppVer.PreviousVersion,
+			CurrentVersion:  newAppVer.CurrentVersion,
+		}
+
 		log.Info("Deployment version updated", "Deployment", resource)
 	}
 
