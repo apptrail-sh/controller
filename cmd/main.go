@@ -21,6 +21,10 @@ import (
 	"flag"
 	"os"
 
+	"github.com/apptrail-sh/controller/internal/hooks"
+	"github.com/apptrail-sh/controller/internal/hooks/slack"
+	"github.com/apptrail-sh/controller/internal/model"
+
 	"github.com/apptrail-sh/controller/internal/reconciler"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -57,6 +61,7 @@ func main() {
 	var secureMetrics bool
 	var enableHTTP2 bool
 	var tlsOpts []func(*tls.Config)
+	var slackWebhookURL string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -67,6 +72,8 @@ func main() {
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
+	flag.StringVar(&slackWebhookURL, "slack-webhook-url", "", "The URL to send slack notifications to")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -142,10 +149,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	notifierChan := make(chan model.WorkloadUpdate, 100)
+
+	var notifiers = []hooks.Notifier{}
+	if slackWebhookURL != "" {
+		slackNotifier := slack.NewSlackNotifier(slackWebhookURL)
+		notifiers = append(notifiers, slackNotifier)
+	}
+	notifierQueue := hooks.NewNotifierQueue(notifierChan, notifiers)
+	go notifierQueue.Loop()
+
 	deploymentReconciler := reconciler.NewDeploymentReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		mgr.GetEventRecorderFor("apptrail-controller"))
+		mgr.GetEventRecorderFor("apptrail-controller"),
+		notifierChan)
 
 	if err = deploymentReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AppTrailDeployment")
