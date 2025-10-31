@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     "github>int128/go-renovate-config:kubebuilder",
-    "github>int128/go-renovate-config:go-directive"
+    "github>int128/go-renovate-config:go-version"
   ],
   "packageRules": [
     {
