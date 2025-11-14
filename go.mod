@@ -1,6 +1,6 @@
 module github.com/apptrail-sh/controller
 
-go 1.24.6
+go 1.25.4
 
 require (
 	github.com/onsi/ginkgo/v2 v2.27.2
